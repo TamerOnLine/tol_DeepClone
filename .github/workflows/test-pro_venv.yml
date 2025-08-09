@@ -21,3 +21,8 @@ jobs:
 
       - name: Run pro_venv.py
         run: python pro_venv.py
+
+      - name: Sanity check (Linux)
+        run: |
+          venv/bin/python -V
+          venv/bin/python -c "import flask, requests; print('OK')"

@@ -17,7 +17,7 @@ def create_vscode_files(venv_dir):
         - project.code-workspace: VS Code workspace configuration.
 
     Notes:
-        - Assumes Windows-style paths for the Python interpreter.
+        - Uses correct python interpreter path on Windows/Linux/macOS.
     """
     print("\n[8] Creating VS Code files: settings, launch, workspace")
 
@@ -28,12 +28,19 @@ def create_vscode_files(venv_dir):
 
     os.makedirs(vscode_dir, exist_ok=True)
 
+    # Cross-platform interpreter path inside the venv
+    interp = (
+        os.path.join(venv_dir, "Scripts", "python.exe")
+        if os.name == "nt"
+        else os.path.join(venv_dir, "bin", "python")
+    )
+
     # Create settings.json
     settings = {
-        "python.defaultInterpreterPath": os.path.join(venv_dir, "Scripts", "python.exe"),
+        "python.defaultInterpreterPath": interp,
         "python.terminal.activateEnvironment": True,
         "editor.formatOnSave": True,
-        "python.formatting.provider": "black"
+        "python.formatting.provider": "black",
     }
     with open(settings_path, "w", encoding="utf-8") as f:
         json.dump(settings, f, indent=2)
@@ -48,26 +55,28 @@ def create_vscode_files(venv_dir):
                 "request": "launch",
                 "program": "${workspaceFolder}/main.py",
                 "console": "integratedTerminal",
-                "justMyCode": True
+                "justMyCode": True,
             }
-        ]
+        ],
     }
     with open(launch_path, "w", encoding="utf-8") as f:
         json.dump(launch, f, indent=2)
 
     # Create project.code-workspace
     workspace = {
-        "folders": [
-            {"path": "."}
-        ],
+        "folders": [{"path": "."}],
         "settings": {
-            "python.defaultInterpreterPath": os.path.join(venv_dir, "Scripts", "python.exe")
-        }
+            "python.defaultInterpreterPath": interp,
+        },
     }
     with open(workspace_path, "w", encoding="utf-8") as f:
         json.dump(workspace, f, indent=2)
 
-    print("VS Code files created successfully: settings.json, launch.json, project.code-workspace")
+    print(
+        "VS Code files created successfully: settings.json, launch.json, project.code-workspace"
+    )
+
+
 def load_or_create_config():
     """
     Load or create the setup-config.json file.
@@ -86,7 +95,7 @@ def load_or_create_config():
             "entry_point": "main.py",
             "requirements_file": "requirements.txt",
             "venv_dir": "venv",
-            "python_version": "3.12"
+            "python_version": "3.12",
         }
         with open(config_path, "w", encoding="utf-8") as f:
             json.dump(default_config, f, indent=2)
@@ -96,6 +105,7 @@ def load_or_create_config():
 
     with open(config_path, "r", encoding="utf-8") as f:
         return json.load(f)
+
 
 def create_virtualenv(venv_dir, python_version=None):
     """
@@ -113,6 +123,7 @@ def create_virtualenv(venv_dir, python_version=None):
     else:
         print("Virtual environment already exists.")
 
+
 def create_requirements_file(path):
     """
     Create a default requirements.txt if it doesn't exist.
@@ -129,6 +140,7 @@ def create_requirements_file(path):
     else:
         print("requirements.txt already exists.")
 
+
 def install_requirements(venv_dir, requirements_path):
     """
     Install packages from requirements.txt.
@@ -138,9 +150,14 @@ def install_requirements(venv_dir, requirements_path):
         requirements_path (str): Path to requirements.txt file.
     """
     print("\n[4] Installing requirements")
-    pip_path = os.path.join(venv_dir, "Scripts", "pip.exe") if os.name == "nt" else os.path.join(venv_dir, "bin", "pip")
+    pip_path = (
+        os.path.join(venv_dir, "Scripts", "pip.exe")
+        if os.name == "nt"
+        else os.path.join(venv_dir, "bin", "pip")
+    )
     subprocess.run([pip_path, "install", "-r", requirements_path], check=True)
     print("Packages installed.")
+
 
 def upgrade_pip(venv_dir):
     """
@@ -150,9 +167,14 @@ def upgrade_pip(venv_dir):
         venv_dir (str): Directory path for the virtual environment.
     """
     print("\n[5] Upgrading pip")
-    python_path = os.path.join(venv_dir, "Scripts", "python.exe") if os.name == "nt" else os.path.join(venv_dir, "bin", "python")
+    python_path = (
+        os.path.join(venv_dir, "Scripts", "python.exe")
+        if os.name == "nt"
+        else os.path.join(venv_dir, "bin", "python")
+    )
     subprocess.run([python_path, "-m", "pip", "install", "--upgrade", "pip"], check=True)
     print("pip upgraded.")
+
 
 def create_env_info(venv_dir):
     """
@@ -163,12 +185,17 @@ def create_env_info(venv_dir):
     """
     print("\n[6] Creating env-info.txt")
     info_path = "env-info.txt"
-    python_path = os.path.join(venv_dir, "Scripts", "python.exe") if os.name == "nt" else os.path.join(venv_dir, "bin", "python")
+    python_path = (
+        os.path.join(venv_dir, "Scripts", "python.exe")
+        if os.name == "nt"
+        else os.path.join(venv_dir, "bin", "python")
+    )
     with open(info_path, "w", encoding="utf-8") as f:
         subprocess.run([python_path, "--version"], stdout=f)
         f.write("\nInstalled packages:\n")
         subprocess.run([python_path, "-m", "pip", "freeze"], stdout=f)
     print(f"Environment info saved to {info_path}")
+
 
 def create_main_file(main_file_path, venv_dir):
     """
@@ -182,16 +209,21 @@ def create_main_file(main_file_path, venv_dir):
     if not os.path.exists(main_file_path):
         print(f"Creating {main_file_path}...")
 
-        venv_site = os.path.join(venv_dir, "Lib", "site-packages") if os.name == "nt" else os.path.join(venv_dir, "lib", "python3", "site-packages")
-
+        # Build the embedded script with dynamic site-packages detection
         main_code = f'''
 import os
 import sys
 import json
 
 # Activate the virtual environment (embedded)
-venv_site_packages = os.path.join(os.path.dirname(__file__), r"{venv_site}")
-if venv_site_packages not in sys.path:
+base_dir = os.path.dirname(__file__)
+if os.name == "nt":
+    venv_site_packages = os.path.join(base_dir, r"{venv_dir}", "Lib", "site-packages")
+else:
+    pyver = "python" + str(sys.version_info[0]) + "." + str(sys.version_info[1])
+    venv_site_packages = os.path.join(base_dir, r"{venv_dir}", "lib", pyver, "site-packages")
+
+if os.path.isdir(venv_site_packages) and venv_site_packages not in sys.path:
     sys.path.insert(0, venv_site_packages)
 
 print("Virtual environment activated within script.")
@@ -215,16 +247,19 @@ def load_entry_point():
 
     print(f"Running: {{main_file}}")
     with open(main_file, encoding="utf-8") as f:
-        exec(f.read(), globals())
+        code = compile(f.read(), main_file, "exec")
+        exec(code, globals())
 
 if __name__ == "__main__":
     load_entry_point()
-'''
+'''.lstrip()
+
         with open(main_file_path, "w", encoding="utf-8") as f:
-            f.write(main_code.strip())
+            f.write(main_code)
         print(f"{main_file_path} created.")
     else:
         print("main.py already exists.")
+
 
 def create_app_file(app_file_path):
     """
@@ -257,10 +292,11 @@ if __name__ == "__main__":
 
     create_virtualenv(venv_dir, python_version)
     create_requirements_file(requirements_path)
-    install_requirements(venv_dir, requirements_path)
+    # Prefer upgrading pip before installing deps
     upgrade_pip(venv_dir)
+    install_requirements(venv_dir, requirements_path)
     create_env_info(venv_dir)
-    
+
     entry_point = config.get("entry_point", "main.py")
     create_main_file(entry_point, venv_dir)
 

@@ -45,7 +45,11 @@ API_KEY = os.getenv("API_KEY")
 
 
 # ---------------------------- Helpers ----------------------------
-TEXT_EXTS = {".toml", ".md", ".yml", ".yaml", ".ini", ".cfg", ".env", ".txt"}  # NEW
+TEXT_EXTS = {".toml", ".md", ".yml", ".yaml", ".ini", ".cfg", ".env", ".txt"}
+TEXT_FILENAMES = {
+    "license", "license.txt", "notice", "readme", "readme.md",
+    ".gitignore", ".gitattributes", ".editorconfig"
+}
 
 def require_api_key() -> Optional[Tuple[Response, int]]:
     """Validate the API key from the ``Authorization`` header.
@@ -215,7 +219,8 @@ def is_binary_mime(mime: str) -> bool:
         return False
     return True
 
-def guess_mime(path: str) -> str:  # REPLACE the old one
+
+def guess_mime(path: str) -> str:
 
     """Guess the MIME type for a path.
 
@@ -225,7 +230,10 @@ def guess_mime(path: str) -> str:  # REPLACE the old one
     Returns:
         str: A MIME type (defaults to ``"application/octet-stream"``).
     """
-    ext = os.path.splitext(path)[1].lower()
+    name = os.path.basename(path).lower()
+    if name in TEXT_FILENAMES:
+        return "text/plain"
+    ext = os.path.splitext(name)[1]
     if ext in TEXT_EXTS:
         return "text/plain"
     return mimetypes.guess_type(path)[0] or "application/octet-stream"

@@ -1,0 +1,8 @@
+{
+  "project_name": "tol_DeepClone",
+  "main_file": "app.py",
+  "entry_point": "main.py",
+  "requirements_file": "requirements.txt",
+  "venv_dir": "venv",
+  "python_version": "3.12"
+}

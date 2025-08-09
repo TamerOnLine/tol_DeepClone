@@ -159,3 +159,11 @@ Dev_requirements.txt
 
 # Local cache from the app
 .cache/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Generated env info (بتتغير كل تشغيل)
+env-info.txt
+

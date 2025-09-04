@@ -164,6 +164,6 @@ Dev_requirements.txt
 .DS_Store
 Thumbs.db
 
-# Generated env info (بتتغير كل تشغيل)
+# Generated env info 
 env-info.txt
 
